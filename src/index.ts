@@ -36,7 +36,7 @@ function assertEntropy(entropy: Uint8Array) {
  * generateMnemonic(wordlist, 128)
  * // 'legal winner thank year wave sausage worth useful legal winner thank yellow'
  */
-export function generateMnemonic(wordlist: string[], strength: number = 128): string {
+export function generateMnemonic(wordlist: string[], strength: number = 128): Uint8Array {
   assert.number(strength);
   if (strength % 32 !== 0 || strength > 256) throw new TypeError('Invalid entropy');
   return entropyToMnemonic(randomBytes(strength / 8), wordlist);
@@ -76,9 +76,10 @@ function getCoder(wordlist: string[]) {
  *   0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f
  * ])
  */
-export function mnemonicToEntropy(mnemonic: string, wordlist: string[]): Uint8Array {
-  const { words } = normalize(mnemonic);
-  const entropy = getCoder(wordlist).decode(words);
+export function mnemonicToEntropy(mnemonic: string | Buffer, wordlist: string[]): Uint8Array {
+  const mnemonicBuffer =
+    typeof mnemonic === 'string' ? Buffer.from(normalize(mnemonic).nfkd, 'utf8') : mnemonic;
+  const entropy = getCoder(wordlist).decode(normalize(mnemonicBuffer.toString()).words);
   assertEntropy(entropy);
   return entropy;
 }
@@ -96,10 +97,13 @@ export function mnemonicToEntropy(mnemonic: string, wordlist: string[]): Uint8Ar
  * entropyToMnemonic(ent, wordlist);
  * // 'legal winner thank year wave sausage worth useful legal winner thank yellow'
  */
-export function entropyToMnemonic(entropy: Uint8Array, wordlist: string[]): string {
+export function entropyToMnemonic(entropy: Uint8Array, wordlist: string[]): Buffer {
   assertEntropy(entropy);
   const words = getCoder(wordlist).encode(entropy);
-  return words.join(isJapanese(wordlist) ? '\u3000' : ' ');
+  const indexes = words.map((word) => wordlist.indexOf(word));
+
+  const uInt8ArrayOfMnemonic = new Uint8Array(new Uint16Array(indexes).buffer);
+  return Buffer.from(uInt8ArrayOfMnemonic);
 }
 
 /**
@@ -140,6 +144,9 @@ export function mnemonicToSeed(mnemonic: string, passphrase = '') {
  * mnemonicToSeedSync(mnem, 'password');
  * // new Uint8Array([...64 bytes])
  */
-export function mnemonicToSeedSync(mnemonic: string, passphrase = '') {
-  return pbkdf2(sha512, normalize(mnemonic).nfkd, salt(passphrase), { c: 2048, dkLen: 64 });
+export function mnemonicToSeedSync(mnemonic: string | Buffer, passphrase = '') {
+  const mnemonicBuffer =
+    typeof mnemonic === 'string' ? Buffer.from(normalize(mnemonic).nfkd, 'utf8') : mnemonic;
+
+  return pbkdf2(sha512, mnemonicBuffer, salt(passphrase), { c: 2048, dkLen: 64 });
 }
