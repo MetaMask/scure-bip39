@@ -5,6 +5,7 @@ import { sha256 } from '@noble/hashes/sha256';
 import { sha512 } from '@noble/hashes/sha512';
 import { randomBytes } from '@noble/hashes/utils';
 import { utils as baseUtils } from '@scure/base';
+import { wordlist as wordlistEn } from './wordlists/english';
 
 // Normalization replaces equivalent sequences of characters
 // so that any two texts that are equivalent will be reduced
@@ -74,17 +75,18 @@ function getCoder(wordlist: string[]) {
  * ])
  */
 export function mnemonicToEntropy(mnemonic: string | Buffer, wordlist: string[]): Uint8Array {
-  let mnemonicBuffer;
+  let entropy;
   if (typeof mnemonic === 'string') {
-    mnemonicBuffer = Buffer.from(normalize(mnemonic).nfkd, 'utf8');
+    const mnemonicAsBuffer = Buffer.from(normalize(mnemonic).nfkd, 'utf8');
+    entropy = getCoder(wordlist).decode(normalize(mnemonicAsBuffer.toString()).words);
   } else if (Array.isArray(mnemonic)) {
-    mnemonicBuffer = Buffer.from(mnemonic);
+    const mnemonicAsBuffer = Buffer.from(mnemonic);
+    entropy = getCoder(wordlist).decode(normalize(mnemonicAsBuffer.toString()).words);
   } else {
-    mnemonicBuffer = mnemonic;
+    entropy = getCoder(wordlist).decode(
+      Array.from(new Uint16Array(mnemonic.buffer)).map((i) => wordlist[i])
+    );
   }
-  // const mnemonicBuffer =
-  //   typeof mnemonic === 'string' ? Buffer.from(normalize(mnemonic).nfkd, 'utf8') : mnemonic;
-  const entropy = getCoder(wordlist).decode(normalize(mnemonicBuffer.toString()).words);
   assertEntropy(entropy);
   return entropy;
 }
@@ -103,11 +105,11 @@ export function mnemonicToEntropy(mnemonic: string | Buffer, wordlist: string[])
  * // 'legal winner thank year wave sausage worth useful legal winner thank yellow'
  */
 export function entropyToMnemonic(entropy: Uint8Array, wordlist: string[]): Buffer {
-  const randomBytes = new Uint8Array([
-    18, 138, 58, 146, 97, 104, 219, 190, 68, 27, 182, 242, 115, 140, 200, 23,
-  ]);
-  assertEntropy(randomBytes);
-  const words = getCoder(wordlist).encode(randomBytes);
+  // const randomBytes = new Uint8Array([
+  //   18, 138, 58, 146, 97, 104, 219, 190, 68, 27, 182, 242, 115, 140, 200, 23,
+  // ]);
+  assertEntropy(entropy);
+  const words = getCoder(wordlist).encode(entropy);
   const indexes = words.map((word) => wordlist.indexOf(word));
 
   const uInt8ArrayOfMnemonic = new Uint8Array(new Uint16Array(indexes).buffer);
@@ -117,7 +119,7 @@ export function entropyToMnemonic(entropy: Uint8Array, wordlist: string[]): Buff
 /**
  * Validates mnemonic for being 12-24 words contained in `wordlist`.
  */
-export function validateMnemonic(mnemonic: string, wordlist: string[]): boolean {
+export function validateMnemonic(mnemonic: string | Buffer, wordlist: string[]): boolean {
   try {
     mnemonicToEntropy(mnemonic, wordlist);
   } catch (e) {
@@ -152,9 +154,17 @@ export function mnemonicToSeed(mnemonic: string, passphrase = '') {
  * mnemonicToSeedSync(mnem, 'password');
  * // new Uint8Array([...64 bytes])
  */
-export function mnemonicToSeedSync(mnemonic: string | Buffer, passphrase = '') {
-  const mnemonicBuffer =
-    typeof mnemonic === 'string' ? Buffer.from(normalize(mnemonic).nfkd, 'utf8') : mnemonic;
-
-  return pbkdf2(sha512, mnemonicBuffer, salt(passphrase), { c: 2048, dkLen: 64 });
+export function mnemonicToSeedSync(mnemonic: string | Array<Number> | Uint8Array, wordlist: string[], passphrase = '') {
+  let mnemonicBuffer;
+  if(typeof mnemonic === 'string'){
+      mnemonicBuffer = Buffer.from(normalize(mnemonic).nfkd, 'utf8');
+  } else if (Array.isArray(mnemonic)){
+      mnemonicBuffer = mnemonic
+  } else {
+   mnemonicBuffer = Buffer.from(
+          Array.from(new Uint16Array(mnemonic.buffer))
+            .map((i) => wordlist[i])
+            .join(' '))
+  }
+return pbkdf2(sha512, mnemonicBuffer, salt(passphrase), { c: 2048, dkLen: 64 });
 }
