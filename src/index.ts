@@ -104,16 +104,15 @@ export function mnemonicToEntropy(mnemonic: string | Buffer, wordlist: string[])
  * entropyToMnemonic(ent, wordlist);
  * // 'legal winner thank year wave sausage worth useful legal winner thank yellow'
  */
-export function entropyToMnemonic(entropy: Uint8Array, wordlist: string[]): Buffer {
+export function entropyToMnemonic(entropy: Uint8Array, wordlist: string[]): Uint8Array {
   // const randomBytes = new Uint8Array([
   //   18, 138, 58, 146, 97, 104, 219, 190, 68, 27, 182, 242, 115, 140, 200, 23,
   // ]);
   assertEntropy(entropy);
   const words = getCoder(wordlist).encode(entropy);
-  const indexes = words.map((word) => wordlist.indexOf(word));
-
-  const uInt8ArrayOfMnemonic = new Uint8Array(new Uint16Array(indexes).buffer);
-  return Buffer.from(uInt8ArrayOfMnemonic);
+  const indices = words.map((word) => wordlist.indexOf(word));
+  const uInt8ArrayOfMnemonic = new Uint8Array(new Uint16Array(indices).buffer);
+  return uInt8ArrayOfMnemonic;
 }
 
 /**
@@ -162,7 +161,7 @@ export function mnemonicToSeedSync(
   let mnemonicBuffer;
   if (typeof mnemonic === 'string') {
     mnemonicBuffer = Buffer.from(normalize(mnemonic).nfkd, 'utf8');
-  } else if (Array.isArray(mnemonic)) {
+  } else if (Buffer.isBuffer(mnemonic)) {
     mnemonicBuffer = mnemonic;
   } else {
     mnemonicBuffer = Buffer.from(
