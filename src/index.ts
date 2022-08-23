@@ -5,7 +5,7 @@ import { sha256 } from '@noble/hashes/sha256';
 import { sha512 } from '@noble/hashes/sha512';
 import { randomBytes } from '@noble/hashes/utils';
 import { utils as baseUtils } from '@scure/base';
-import { wordlist as wordlistEn } from './wordlists/english';
+// import { wordlist as wordlistEn } from './wordlists/english';
 
 // Normalization replaces equivalent sequences of characters
 // so that any two texts that are equivalent will be reduced
@@ -154,17 +154,22 @@ export function mnemonicToSeed(mnemonic: string, passphrase = '') {
  * mnemonicToSeedSync(mnem, 'password');
  * // new Uint8Array([...64 bytes])
  */
-export function mnemonicToSeedSync(mnemonic: string | Array<Number> | Uint8Array, wordlist: string[], passphrase = '') {
+export function mnemonicToSeedSync(
+  mnemonic: string | Uint8Array,
+  wordlist: string[],
+  passphrase = ''
+) {
   let mnemonicBuffer;
-  if(typeof mnemonic === 'string'){
-      mnemonicBuffer = Buffer.from(normalize(mnemonic).nfkd, 'utf8');
-  } else if (Array.isArray(mnemonic)){
-      mnemonicBuffer = mnemonic
+  if (typeof mnemonic === 'string') {
+    mnemonicBuffer = Buffer.from(normalize(mnemonic).nfkd, 'utf8');
+  } else if (Array.isArray(mnemonic)) {
+    mnemonicBuffer = mnemonic;
   } else {
-   mnemonicBuffer = Buffer.from(
-          Array.from(new Uint16Array(mnemonic.buffer))
-            .map((i) => wordlist[i])
-            .join(' '))
+    mnemonicBuffer = Buffer.from(
+      Array.from(new Uint16Array(mnemonic.buffer))
+        .map((i) => wordlist[i])
+        .join(' ')
+    );
   }
-return pbkdf2(sha512, mnemonicBuffer, salt(passphrase), { c: 2048, dkLen: 64 });
+  return pbkdf2(sha512, mnemonicBuffer, salt(passphrase), { c: 2048, dkLen: 64 });
 }
