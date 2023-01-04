@@ -7,8 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ## [2.0.4]
-### Uncategorized
-- fix: ts types file path in package.json ([#12](https://github.com/MetaMask/scure-bip39/pull/12))
+### Fixed
+- Fixes file path to typescript types in `package.json` ([#12](https://github.com/MetaMask/scure-bip39/pull/12))
 
 ## [2.0.3]
 ### Changed
