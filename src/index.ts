@@ -125,7 +125,8 @@ const salt = (passphrase: string) => nfkd(`mnemonic${passphrase}`);
 
 /**
  * Irreversible: Uses KDF to derive 64 bytes of key data from mnemonic + optional password.
- * @param mnemonic 12-24 words
+ * @param mnemonic 12-24 words | Uint8Array representation of mnemonic
+ * @param wordlist an array of words used to recover the mnemonic string from a Uint8Array
  * @param passphrase string that will additionally protect the key
  * @returns 64 bytes of key data
  * @example
@@ -133,13 +134,15 @@ const salt = (passphrase: string) => nfkd(`mnemonic${passphrase}`);
  * await mnemonicToSeed(mnem, 'password');
  * // new Uint8Array([...64 bytes])
  */
-export function mnemonicToSeed(mnemonic: string, passphrase = '') {
-  return pbkdf2Async(sha512, normalize(mnemonic).nfkd, salt(passphrase), { c: 2048, dkLen: 64 });
+export function mnemonicToSeed(mnemonic: string | Uint8Array, wordlist: string[], passphrase = '') {
+  const encodedMnemonicUint8Array = encodeMnemonicForSeedDerivation(mnemonic, wordlist);
+  return pbkdf2Async(sha512, encodedMnemonicUint8Array, salt(passphrase), { c: 2048, dkLen: 64 });
 }
 
 /**
  * Irreversible: Uses KDF to derive 64 bytes of key data from mnemonic + optional password.
- * @param mnemonic 12-24 words
+ * @param mnemonic 12-24 words | Uint8Array representation of mnemonic
+ * @param wordlist an array of words used to recover the mnemonic string from a Uint8Array
  * @param passphrase string that will additionally protect the key
  * @returns 64 bytes of key data
  * @example
@@ -152,15 +155,23 @@ export function mnemonicToSeedSync(
   wordlist: string[],
   passphrase = ''
 ) {
-  let mnemonicUint8Array;
+  const encodedMnemonicUint8Array = encodeMnemonicForSeedDerivation(mnemonic, wordlist);
+  return pbkdf2(sha512, encodedMnemonicUint8Array, salt(passphrase), { c: 2048, dkLen: 64 });
+}
+
+/**
+ * Helper function to encode mnemonic passed either as a string or `Uint8Array` for deriving a seed/key with pbkdf2.
+ */
+function encodeMnemonicForSeedDerivation(mnemonic: string | Uint8Array, wordlist: string[]) {
+  let encodedMnemonicUint8Array;
   if (typeof mnemonic === 'string') {
-    mnemonicUint8Array = new TextEncoder().encode(normalize(mnemonic).nfkd);
+    encodedMnemonicUint8Array = new TextEncoder().encode(normalize(mnemonic).nfkd);
   } else {
-    mnemonicUint8Array = new TextEncoder().encode(
+    encodedMnemonicUint8Array = new TextEncoder().encode(
       Array.from(new Uint16Array(mnemonic.buffer))
         .map((i) => wordlist[i])
         .join(' ')
     );
   }
-  return pbkdf2(sha512, mnemonicUint8Array, salt(passphrase), { c: 2048, dkLen: 64 });
+  return encodedMnemonicUint8Array;
 }

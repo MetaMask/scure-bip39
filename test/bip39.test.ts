@@ -150,7 +150,7 @@ describe('BIP39', () => {
 
       describe('Async', () => {
         it('Should recover the right seed', async () => {
-          const recoveredSeed = await mnemonicToSeed(mnemonic);
+          const recoveredSeed = await mnemonicToSeed(mnemonic, englishWordlist);
           await deepStrictEqual(equalsBytes(seed, recoveredSeed), true);
         });
       });
@@ -191,7 +191,7 @@ describe('BIP39', () => {
 
       describe('Async', () => {
         it('Should recover the right seed', async () => {
-          const recoveredSeed = await mnemonicToSeed(mnemonic, PASSPHRASE);
+          const recoveredSeed = await mnemonicToSeed(mnemonic, englishWordlist, PASSPHRASE);
           await deepStrictEqual(seed, recoveredSeed);
         });
       });
@@ -559,7 +559,7 @@ describe('BIP39', () => {
           seed,
           'mnemonicToSeedSync'
         );
-        const res = await mnemonicToSeed(mnemonic, password);
+        const res = await mnemonicToSeed(mnemonic, englishWordlist, password);
         await deepStrictEqual(toHex(res), seed, 'mnemonicToSeed');
         await deepStrictEqual(
           entropyToMnemonic(hexToBytes(entropy), wordlist),
