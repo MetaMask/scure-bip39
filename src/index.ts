@@ -141,8 +141,8 @@ export function mnemonicToSeed(mnemonic: string | Uint8Array, wordlist: string[]
 
 /**
  * Irreversible: Uses KDF to derive 64 bytes of key data from mnemonic + optional password.
- * @param mnemonic 12-24 words | Uint8Array representation of mnemonic
- * @param wordlist an array of words used to recover the mnemonic string from a Uint8Array
+ * @param mnemonic 12-24 words (string | Uint8Array)
+ * @param wordlist array of 2048 words used to recover the mnemonic string from a Uint8Array
  * @param passphrase string that will additionally protect the key
  * @returns 64 bytes of key data
  * @example
