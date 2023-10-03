@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ## [2.1.1]
+### Added
+- Add `node.engines` field indicating minimum Node.js version 16 to package manifest ([#21](https://github.com/MetaMask/scure-bip39/pull/21))
+
+### Changed
+- Bump `@noble/hashes` from `~1.1.1` to `~1.3.2` ([#20](https://github.com/MetaMask/scure-bip39/pull/20))
+- Bump `@scure/base` from `~1.1.0` to `~1.1.3` ([#20](https://github.com/MetaMask/scure-bip39/pull/20))
 
 ## [2.1.0]
 ### Added
